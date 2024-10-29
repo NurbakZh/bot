@@ -1,0 +1,8 @@
+pydantic
+aiogram
+requests
+bs4
+asyncio
+pydantic_settings
+pydantic
+aiogram
