@@ -102,6 +102,7 @@ def get_data_from_last_script(login, password, login_url, target_url, index_of_m
 
 def change_price(login, password, login_url, price_new):
     with requests.Session() as session:
+        id = login_url.split('?ID=')[1]
         payload = {
             "tab": "main",
             "signature": "",  
@@ -113,12 +114,51 @@ def change_price(login, password, login_url, price_new):
             "USER_PASSWORD": password,
         }
 
-        to_return = {"Минимальная цена": -1,
-         "Пороговая цена для товара": -1}
-        
         login_response = session.post(login_url, data=payload, headers=headers)
         if login_response.ok:
-            print(price_new)
+            soup = BeautifulSoup(login_response.text, 'html.parser')
+            script_tags = soup.find_all('script')
+            input_tags = soup.find_all("input", {"name": re.compile(r"^pos\[")})
+            for input_tag in input_tags:
+                print(input_tag)     
+            bitrix_sessid = find_bitrix_session_id(script_tags)
+
+            url = f'https://omarket.kz/personal/trade/moffers/save_form.php?ID={id}'
+
+            payload_for_ajax = {
+                "trade[DISCOUNT]": 0,
+                "tradeOfferId": id,
+                "save_form": "Y",
+                "agreement-field": "Y",
+                "price_no_nds_all": price_new,
+                "bitrix_sessid": bitrix_sessid,
+            }
+            
+            headers_ajax = {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+                "X-CSRF-Token": "eyJpdiI6Im5sM0RjTGxTK1Jpa25qQjB5anBNMlE9PSIsInZhbHVlIjoiTS8rMlJ1TGFidVVqSktuRlg0VnNlOTg2YTBjc2ZjTWhEWUkxd2RBaVNZbzR4NVBlNGo0K2MrMzVNT1pObTg5THovV1ZINnNBckcrbXd0U1VobHJYc0F5MEtSdlpTelBEQS9qWE9Pd0NtNWw4dEpuMGhLd0hIR2VhblRPU1BxazkiLCJtYWMiOiI1YjMzMzBjNGIwNzlmZmNmMTg4ZjBkOGE0ZmM5Mzk0MzhjMGMzZGFjNmUxMjBmYTcxYzkyODU2ZmQ3YzY1NTU1IiwidGFnIjoiIn0%3D",  # Replace with the actual CSRF token if needed
+                "X-Requested-With": "XMLHttpRequest",
+            }
+
+            response_change = session.post(url, data=payload_for_ajax, headers=headers_ajax)
+            if response_change.ok:
+                response_data = response_change.json()
+                print(response_data)
+                if response_data.get('status') == 'ok':
+                    message = f"Success: {response_data.get('message')}"
+                    # Handle success: reload or redirect based on response
+                else:
+                    message = f"Error: {response_data.get('message')}"
+                    # Handle specific error types if needed
+            else:
+                message = "Failed to submit form. Server error."
+            
+            return message
+
+
+
+
 
 def get_price(login, password, login_url, target_url, index):
     data = get_data_from_last_script(login, password, login_url, target_url, 1)
@@ -127,3 +167,6 @@ def get_price(login, password, login_url, target_url, index):
 if __name__ == '__main__':
     login_url = "https://omarket.kz/personal/trade/moffers/edit.php?ID=17856318"
     target_url = "https://omarket.kz/catalog/ecc_kancelyarskie_tovary/ecc_nastolnye_prinadlezhnosty/dyrokol/dyrokol3.html"
+
+    get_price("Asyl12738@mail.ru", "Safa12738", login_url, target_url, 1)
+    change_price("Asyl12738@mail.ru", "Safa12738", login_url, 994)
