@@ -17,7 +17,7 @@ def find_bitrix_session_id(script_tags):
                 continue
     return "no_bitrix"
 
-def get_data_from_last_script(login_url, target_url, index_of_minimal_price):
+def get_data_from_last_script(login, password, login_url, target_url, index_of_minimal_price):
     with requests.Session() as session:
         payload = {
             "tab": "main",
@@ -26,8 +26,8 @@ def get_data_from_last_script(login_url, target_url, index_of_minimal_price):
             "AUTH_FORM": "Y",
             "TYPE": "AUTH",
             "backurl": "/auth/?backurl=%2F",
-            "USER_LOGIN": "Asyl12738@mail.ru",
-            "USER_PASSWORD": "Safa12738",
+            "USER_LOGIN": login,
+            "USER_PASSWORD": password,
         }
 
         to_return = {"Минимальная цена": -1,
@@ -38,8 +38,11 @@ def get_data_from_last_script(login_url, target_url, index_of_minimal_price):
             
             soup = BeautifulSoup(login_response.text, "html.parser")
             b_tags = soup.find_all("b")
+            nub = b_tags[len(b_tags) - 1].text.split('.')[0]
+            nub1 = nub.replace(" ", "")
+            nub2 = nub1.replace("\xa0", "")
             try:
-                to_return["Пороговая цена для товара"] = b_tags[len(b_tags) - 1].text
+                to_return["Пороговая цена для товара"] = int(nub2)
             except:
                 to_return["Пороговая цена для товара"] = "Нет пороговой цены"
 
@@ -97,13 +100,30 @@ def get_data_from_last_script(login_url, target_url, index_of_minimal_price):
         else:
             return f"УПС.... Не получается зайти в ваш аккаунт из-за ошибки: {login_response.status_code}. Вы точно ввели правильные логин и пароль????? Если да, то напишите Нурбеку пожалуйста - @nurba_zh"
 
-def get_price(login_url, target_url, index):
-    data = get_data_from_last_script(login_url, target_url, 1)
-    return data['Минимальная цена']
+def change_price(login, password, login_url, price_new):
+    with requests.Session() as session:
+        payload = {
+            "tab": "main",
+            "signature": "",  
+            "signature_text_raw": "0JTQsNGC0LAg0LDQstGC0L7RgNC40LfQsNGG0LjQuCAyNy4xMC4yMDI0IDIwOjI5OjE0",
+            "AUTH_FORM": "Y",
+            "TYPE": "AUTH",
+            "backurl": "/auth/?backurl=%2F",
+            "USER_LOGIN": login,
+            "USER_PASSWORD": password,
+        }
+
+        to_return = {"Минимальная цена": -1,
+         "Пороговая цена для товара": -1}
+        
+        login_response = session.post(login_url, data=payload, headers=headers)
+        if login_response.ok:
+            print(price_new)
+
+def get_price(login, password, login_url, target_url, index):
+    data = get_data_from_last_script(login, password, login_url, target_url, 1)
+    return int(data["Минимальная цена"])
 
 if __name__ == '__main__':
     login_url = "https://omarket.kz/personal/trade/moffers/edit.php?ID=17856318"
     target_url = "https://omarket.kz/catalog/ecc_kancelyarskie_tovary/ecc_nastolnye_prinadlezhnosty/dyrokol/dyrokol3.html"
-    data = get_data_from_last_script(login_url, target_url, 1)
-    
-    print(data)
