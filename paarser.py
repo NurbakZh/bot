@@ -174,7 +174,7 @@ def change_price(login, password, login_url, price_new):
 
 
 def get_price(login, password, login_url, target_url, index):
-    data = get_data_from_last_script(login, password, login_url, target_url, 1)
+    data = get_data_from_last_script(login, password, login_url, target_url, index)
     return int(data["Минимальная цена"])
 
 if __name__ == '__main__':

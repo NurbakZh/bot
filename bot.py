@@ -67,7 +67,6 @@ async def cmd_start(message: Message):
     formatted_greet = greet.format(name=message.from_user.full_name)
     markup = login_menu
     user_id = message.from_user.id
-    user_login_status[user_id] = {}
     if user_id in user_login_status:
         markup = menu
     else:
@@ -449,7 +448,7 @@ async def check_prices():
                     item["first_url"], 
                     item["min_index"]
                 )
-                if isinstance(current_price, (int, float)) and current_price <= item["min_price_possible"]:
+                if isinstance(current_price, (int, float)) and current_price < item["min_price_possible"]:
                     if (current_price - 1 < item["min_price"]):
                         await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! но она ниже, чем наша минимальная цена, и я не буду обновлять ее")
                         item["min_price_possible"] = current_price
