@@ -119,8 +119,15 @@ def change_price(login, password, login_url, price_new):
             soup = BeautifulSoup(login_response.text, 'html.parser')
             script_tags = soup.find_all('script')
             input_tags = soup.find_all("input", {"name": re.compile(r"^pos\[")})
-            for input_tag in input_tags:
-                print(input_tag)     
+
+            poses = []
+            prices = []    
+
+            for input_elem in input_tags:
+                input_id = input_elem.get('id')
+                input_name = input_elem.get('name') 
+                poses.append({input_name : "Y"})
+                prices.append({f"price_no_nds{input_name.split('pos')[1].split('[P')[0]}" : price_new})
             bitrix_sessid = find_bitrix_session_id(script_tags)
 
             url = f'https://omarket.kz/personal/trade/moffers/save_form.php?ID={id}'
@@ -133,6 +140,15 @@ def change_price(login, password, login_url, price_new):
                 "price_no_nds_all": price_new,
                 "bitrix_sessid": bitrix_sessid,
             }
+
+            
+            for pose in poses:
+                payload_for_ajax.update(pose)
+
+            for price in prices:
+                payload_for_ajax.update(price)
+
+            print(payload_for_ajax)
             
             headers_ajax = {
                 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -169,4 +185,4 @@ if __name__ == '__main__':
     target_url = "https://omarket.kz/catalog/ecc_kancelyarskie_tovary/ecc_nastolnye_prinadlezhnosty/dyrokol/dyrokol3.html"
 
     get_price("Asyl12738@mail.ru", "Safa12738", login_url, target_url, 1)
-    change_price("Asyl12738@mail.ru", "Safa12738", login_url, 994)
+    change_price("Asyl12738@mail.ru", "Safa12738", login_url, 990)
