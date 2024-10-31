@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from config_reader import config
-from paarser import get_data_from_last_script, get_price
+from paarser import get_data_from_last_script, get_price, change_price
 
 # Enable logging to capture important messages
 logging.basicConfig(level=logging.INFO)
@@ -67,7 +67,7 @@ async def cmd_start(message: Message):
     formatted_greet = greet.format(name=message.from_user.full_name)
     markup = login_menu
     user_id = message.from_user.id
-    user_login_status[user_id] = {"account": 'Asyl12738@mail.ru', "password": 'Safa12738'}
+    user_login_status[user_id] = {}
     if user_id in user_login_status:
         markup = menu
     else:
@@ -454,6 +454,7 @@ async def check_prices():
                         await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! но она ниже, чем наша минимальная цена, и я не буду обновлять ее")
                         item["min_price_possible"] = current_price
                     else:
+                        change_price(user_login_status[user_id]["account"], user_login_status[user_id]["password"], item["second_url"], current_price - 1)
                         if isinstance(item["porog"], (int, float)) and current_price - 1 < int(item["porog"]):
                             await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! Обновляем цену на {current_price - 1}. НО ОНА НИЖЕ ПОРОГОВОЙ - {item['porog']}")
                             item["min_price_possible"] = current_price - 1 

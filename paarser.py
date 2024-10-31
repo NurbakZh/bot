@@ -147,8 +147,6 @@ def change_price(login, password, login_url, price_new):
 
             for price in prices:
                 payload_for_ajax.update(price)
-
-            print(payload_for_ajax)
             
             headers_ajax = {
                 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -160,7 +158,6 @@ def change_price(login, password, login_url, price_new):
             response_change = session.post(url, data=payload_for_ajax, headers=headers_ajax)
             if response_change.ok:
                 response_data = response_change.json()
-                print(response_data)
                 if response_data.get('status') == 'ok':
                     message = f"Success: {response_data.get('message')}"
                     # Handle success: reload or redirect based on response
