@@ -13,7 +13,6 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token='8053355193:AAHIXLq3hKEfcTPsdTPRZJ_C7k2aR_C9Sgg')
 dp = Dispatcher()
 
-
 # Create inline keyboard buttons
 button_add_item = InlineKeyboardButton(text="🛍️ Добавить товар", callback_data="add_item")
 button_my_items = InlineKeyboardButton(text="🛒 Список моих товаров", callback_data="my_items")
@@ -61,6 +60,10 @@ user_items = {}
 user_states = {}
 user_login_status = {}
 pagination_data = {}
+
+def item_exists(user_id, url):
+    items = user_items.get(user_id, [])
+    return any(url in [item['first_url'], item['second_url']] for item in items)
 
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
@@ -269,13 +272,23 @@ async def handle_message(message: Message):
             user_states.pop(user_id)
 
         if state["step"] == "waiting_for_first_url":
-            state["first_url"] = message.text
+            first_url = message.text
+            if item_exists(user_id, first_url):
+                await message.answer("Этот товар уже добавлен. Пожалуйста, введите другой товар.")
+                state["step"] = ""
+                return
+            state["first_url"] = first_url
             last_message = await message.answer("Введите вторую ссылку = URL страницы изменения товара с вашего личного кабинета (P.S: где есть пороговая цена):")
             state["last_message"] = last_message 
             state["step"] = "waiting_for_second_url"  # Move to the next state
             
         elif state["step"] == "waiting_for_second_url":
-            state["second_url"] = message.text
+            second_url = message.text
+            if item_exists(user_id, first_url):
+                await message.answer("Этот товар уже добавлен. Пожалуйста, введите другой товар.")
+                state["step"] = ""
+                return
+            state["second_url"] = second_url
             if state["last_message"]:
                 await state["last_message"].delete()
             last_message = await message.answer("Ага, записал. Интересный товар! А теперь, введите вашу МИНИМАЛЬНУЮ цену товара, ниже которой вы продавать не будете. Мы же все таки здесь, чтобы заработать 💵:")
