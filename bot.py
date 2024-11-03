@@ -334,7 +334,7 @@ async def handle_message(message: Message):
                     "first_url": state["first_url"], 
                     "second_url": state["second_url"], 
                     "min_price": int(state["min_price"]), 
-                    "min_price_possible": int(price_and_porog["Минимальная цена"]), 
+                    "min_price_possible": int(price_and_porog["Минимальная цена"]) + 1, 
                     "price": int(price_and_porog["Минимальная цена"]), 
                     "porog": price_and_porog["Пороговая цена для товара"], 
                     "min_index": state["min_index"],
