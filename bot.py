@@ -284,7 +284,7 @@ async def handle_message(message: Message):
             
         elif state["step"] == "waiting_for_second_url":
             second_url = message.text
-            if item_exists(user_id, first_url):
+            if item_exists(user_id, second_url):
                 await message.answer("Этот товар уже добавлен. Пожалуйста, введите другой товар.")
                 state["step"] = ""
                 return
