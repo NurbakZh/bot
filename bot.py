@@ -486,7 +486,7 @@ async def check_prices():
                 #             await bot.send_message(user_id, f"Цена на товар {item['first_url']} поднялась до {current_price}! Обновляем цену на {current_price - 1}.")
                 #             item["min_price_possible"] = current_price - 1 
 
-        await asyncio.sleep(120)
+        await asyncio.sleep(600)
 
 async def main():
     asyncio.create_task(check_prices())
