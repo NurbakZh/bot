@@ -511,7 +511,7 @@ async def check_prices():
         await asyncio.sleep(120)
 
 async def main():
-    dp.scheduler.add_job(check_prices, "interval", seconds=120)
+    asyncio.create_task(check_prices())
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
