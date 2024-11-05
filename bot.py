@@ -526,6 +526,8 @@ async def check_prices():
         finally:
             print("done\n")
             is_running = False
+            
+    await asyncio.sleep(120)
 
 async def main():
     check_prices_task = asyncio.create_task(check_prices())
