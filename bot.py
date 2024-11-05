@@ -484,9 +484,10 @@ async def check_prices():
         if not is_running:
             is_running = True
         try:
+            print("trying\n")
             counter = 0
             for user_id, items in user_items.items():
-                print(user_id, items)
+                print(user_id, items,"\n")
                 for item in items:
                     if counter%10 == 0:
                         print(counter, "\n")
@@ -523,6 +524,7 @@ async def check_prices():
                     #             await bot.send_message(user_id, f"Цена на товар {item['first_url']} поднялась до {current_price}! Обновляем цену на {current_price - 1}.")
                     #             item["min_price_possible"] = current_price - 1 
         finally:
+            print("done\n")
             is_running = False
 
 async def main():
