@@ -483,6 +483,7 @@ async def check_prices():
         counter = 0
         for user_id, items in user_items.items():
             for item in items:
+                print(item)
                 if counter%10 == 0:
                     print(counter, "\n")
                 current_price = get_price(
