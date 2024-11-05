@@ -526,8 +526,11 @@ async def check_prices():
             is_running = False
 
 async def main():
-    asyncio.create_task(check_prices())
-    await dp.start_polling(bot)
+    check_prices_task = asyncio.create_task(check_prices())
+    bot_polling_task = asyncio.create_task(dp.start_polling(bot))
+    
+    # Wait for both tasks to complete
+    await asyncio.gather(check_prices_task, bot_polling_task)
 
 if __name__ == "__main__":
     asyncio.run(main())
