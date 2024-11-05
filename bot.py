@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 # Enable logging to capture important messages
 logging.basicConfig(level=logging.INFO)
 
-check_prices_lock = threading.Lock()
+price_checking_lock = asyncio.Lock()
 
 # Initialize ThreadPoolExecutor
 executor = ThreadPoolExecutor(max_workers=1)
@@ -478,63 +478,41 @@ async def handle_message(message: Message):
             markup = login_menu
         await message.answer("Я не понимаю это сообщение. Пожалуйста, используйте меню для взаимодействия со мной.", reply_markup=markup)
 
+
+
 async def check_prices():
-    is_running = False
     while True:
-        if not is_running:
-            is_running = True
-        try:
-            print("trying\n")
-            counter = 0
-            for user_id, items in user_items.items():
-                print(user_id, items,"\n")
-                for item in items:
-                    if counter%10 == 0:
-                        print(counter, "\n")
-                    current_price = get_price(
-                        user_login_status[user_id]["account"], 
-                        user_login_status[user_id]["password"], 
-                        item["second_url"], 
-                        item["first_url"], 
-                        item["min_index"]
-                    )
-                    counter += 1
-                    if isinstance(current_price, (int, float)) and current_price < item["min_price_possible"]:
-                        if (current_price - 1 < item["min_price"]):
-                            await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! но она ниже, чем наша минимальная цена, и я не буду обновлять ее")
-                            item["min_price_possible"] = current_price
-                        else:
-                            change_price(user_login_status[user_id]["account"], user_login_status[user_id]["password"], item["second_url"], current_price - 1)
-                            if isinstance(item["porog"], (int, float)) and current_price - 1 < int(item["porog"]):
-                                await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! Обновляем цену на {current_price - 1}. НО ОНА НИЖЕ ПОРОГОВОЙ - {item['porog']}")
-                                item["min_price_possible"] = current_price - 1 
-                            else:  
-                                await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! Обновляем цену на {current_price - 1}.")
-                                item["min_price_possible"] = current_price - 1 
-                    # elif isinstance(current_price, (int, float)) and current_price > item["min_price_possible"]:    
-                    #     print('here2')
-                    #     if (item["min_price"] - current_price > 0):
-                    #         await bot.send_message(user_id, f"Цена на товар {item['first_url']} поднялась до {current_price}! но она ниже, чем наша минимальная цена, и я не буду обновлять ее")
-                    #         item["min_price_possible"] = current_price
-                    #     elif (item["min_price"] - current_price < 0):
-                    #         if isinstance(item["porog"], (int, float)) and current_price - 1 < int(item["porog"]):
-                    #             await bot.send_message(user_id, f"Цена на товар {item['first_url']} поднялась до {current_price}! Обновляем цену на {current_price - 1}. НО ОНА НИЖЕ ПОРОГОВОЙ - {item['porog']}")
-                    #             item["min_price_possible"] = current_price - 1 
-                    #         else:    
-                    #             await bot.send_message(user_id, f"Цена на товар {item['first_url']} поднялась до {current_price}! Обновляем цену на {current_price - 1}.")
-                    #             item["min_price_possible"] = current_price - 1 
-        finally:
-            print("done\n")
-            is_running = False
-            
-    await asyncio.sleep(120)
+        async with price_checking_lock:
+            try:
+                for user_id, items in user_items.items():
+                    if user_id in user_login_status:
+                        for item in items:
+                            current_price = get_price(
+                                user_login_status[user_id]["account"], 
+                                user_login_status[user_id]["password"], 
+                                item["second_url"], 
+                                item["first_url"], 
+                                item["min_index"]
+                            )
+                            if isinstance(current_price, (int, float)) and current_price < item["min_price_possible"]:
+                                if (current_price - 1 < item["min_price"]):
+                                    await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! но она ниже, чем наша минимальная цена, и я не буду обновлять ее")
+                                    item["min_price_possible"] = current_price
+                                else:
+                                    change_price(user_login_status[user_id]["account"], user_login_status[user_id]["password"], item["second_url"], current_price - 1)
+                                    if isinstance(item["porog"], (int, float)) and current_price - 1 < int(item["porog"]):
+                                        await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! Обновляем цену на {current_price - 1}. НО ОНА НИЖЕ ПОРОГОВОЙ - {item['porog']}")
+                                        item["min_price_possible"] = current_price - 1 
+                                    else:  
+                                        await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! Обновляем цену на {current_price - 1}.")
+                                        item["min_price_possible"] = current_price - 1 
+            except Exception as e:
+                logging.error(f"Error in check_prices: {e}")
+        await asyncio.sleep(120)
 
 async def main():
-    check_prices_task = asyncio.create_task(check_prices())
-    bot_polling_task = asyncio.create_task(dp.start_polling(bot))
-    
-    # Wait for both tasks to complete
-    await asyncio.gather(check_prices_task, bot_polling_task)
+    dp.scheduler.add_job(check_prices, "interval", seconds=120)
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
