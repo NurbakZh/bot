@@ -481,9 +481,9 @@ async def handle_message(message: Message):
 async def check_prices():
     while True:
         counter = 0
+        print(user_id, items)
         for user_id, items in user_items.items():
             for item in items:
-                print(item)
                 if counter%10 == 0:
                     print(counter, "\n")
                 current_price = get_price(
