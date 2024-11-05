@@ -21,7 +21,7 @@ bot = Bot(token='8053355193:AAHIXLq3hKEfcTPsdTPRZJ_C7k2aR_C9Sgg')
 dp = Dispatcher()
 
 # Create inline keyboard buttons
-sleep_duration = 1800
+sleep_duration = 180
 button_add_item = InlineKeyboardButton(text="🛍️ Добавить товар", callback_data="add_item")
 button_my_items = InlineKeyboardButton(text="🛒 Список моих товаров", callback_data="my_items")
 button_remove_item = InlineKeyboardButton(text="🗑️ Удалить товар", callback_data="remove_item")
