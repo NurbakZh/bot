@@ -474,54 +474,57 @@ async def handle_message(message: Message):
 
 async def check_prices():
     while True:
-        current_time = datetime.now().time()
-        start_time = time(6, 30)  # 8:30 AM
-        end_time = time(16, 30)   # 6:30 PM
         counter = 0
-        if start_time <= current_time <= end_time:
-            for user_id, items in user_items.items():
-                for item in items:
-                    if counter%10 == 0:
-                        print(counter, "\n")
-                    current_price = get_price(
-                        user_login_status[user_id]["account"], 
-                        user_login_status[user_id]["password"], 
-                        item["second_url"], 
-                        item["first_url"], 
-                        item["min_index"]
-                    )
-                    counter+=1
-                    if isinstance(current_price, (int, float)) and current_price < item["min_price_possible"]:
-                        if (current_price - 1 < item["min_price"]):
-                            await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! но она ниже, чем наша минимальная цена, и я не буду обновлять ее")
-                            item["min_price_possible"] = current_price
-                        else:
-                            change_price(user_login_status[user_id]["account"], user_login_status[user_id]["password"], item["second_url"], current_price - 1)
-                            if isinstance(item["porog"], (int, float)) and current_price - 1 < int(item["porog"]):
-                                await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! Обновляем цену на {current_price - 1}. НО ОНА НИЖЕ ПОРОГОВОЙ - {item['porog']}")
-                                item["min_price_possible"] = current_price - 1 
-                            else:  
-                                await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! Обновляем цену на {current_price - 1}.")
-                                item["min_price_possible"] = current_price - 1 
-                    # elif isinstance(current_price, (int, float)) and current_price > item["min_price_possible"]:    
-                    #     print('here2')
-                    #     if (item["min_price"] - current_price > 0):
-                    #         await bot.send_message(user_id, f"Цена на товар {item['first_url']} поднялась до {current_price}! но она ниже, чем наша минимальная цена, и я не буду обновлять ее")
-                    #         item["min_price_possible"] = current_price
-                    #     elif (item["min_price"] - current_price < 0):
-                    #         if isinstance(item["porog"], (int, float)) and current_price - 1 < int(item["porog"]):
-                    #             await bot.send_message(user_id, f"Цена на товар {item['first_url']} поднялась до {current_price}! Обновляем цену на {current_price - 1}. НО ОНА НИЖЕ ПОРОГОВОЙ - {item['porog']}")
-                    #             item["min_price_possible"] = current_price - 1 
-                    #         else:    
-                    #             await bot.send_message(user_id, f"Цена на товар {item['first_url']} поднялась до {current_price}! Обновляем цену на {current_price - 1}.")
-                    #             item["min_price_possible"] = current_price - 1 
+        for user_id, items in user_items.items():
+            for item in items:
+                if counter%10 == 0:
+                    print(counter, "\n")
+                current_price = get_price(
+                    user_login_status[user_id]["account"], 
+                    user_login_status[user_id]["password"], 
+                    item["second_url"], 
+                    item["first_url"], 
+                    item["min_index"]
+                )
+                counter += 1
+                if isinstance(current_price, (int, float)) and current_price < item["min_price_possible"]:
+                    if (current_price - 1 < item["min_price"]):
+                        await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! но она ниже, чем наша минимальная цена, и я не буду обновлять ее")
+                        item["min_price_possible"] = current_price
+                    else:
+                        change_price(user_login_status[user_id]["account"], user_login_status[user_id]["password"], item["second_url"], current_price - 1)
+                        if isinstance(item["porog"], (int, float)) and current_price - 1 < int(item["porog"]):
+                            await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! Обновляем цену на {current_price - 1}. НО ОНА НИЖЕ ПОРОГОВОЙ - {item['porog']}")
+                            item["min_price_possible"] = current_price - 1 
+                        else:  
+                            await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! Обновляем цену на {current_price - 1}.")
+                            item["min_price_possible"] = current_price - 1 
+                # elif isinstance(current_price, (int, float)) and current_price > item["min_price_possible"]:    
+                #     print('here2')
+                #     if (item["min_price"] - current_price > 0):
+                #         await bot.send_message(user_id, f"Цена на товар {item['first_url']} поднялась до {current_price}! но она ниже, чем наша минимальная цена, и я не буду обновлять ее")
+                #         item["min_price_possible"] = current_price
+                #     elif (item["min_price"] - current_price < 0):
+                #         if isinstance(item["porog"], (int, float)) and current_price - 1 < int(item["porog"]):
+                #             await bot.send_message(user_id, f"Цена на товар {item['first_url']} поднялась до {current_price}! Обновляем цену на {current_price - 1}. НО ОНА НИЖЕ ПОРОГОВОЙ - {item['porog']}")
+                #             item["min_price_possible"] = current_price - 1 
+                #         else:    
+                #             await bot.send_message(user_id, f"Цена на товар {item['first_url']} поднялась до {current_price}! Обновляем цену на {current_price - 1}.")
+                #             item["min_price_possible"] = current_price - 1 
 
         new_sleep_duration = user_sleep_durations.get(user_id, sleep_duration)
         await asyncio.sleep(new_sleep_duration)
 
 
+def start_check_prices():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(check_prices())
+    loop.close()
+
 async def main():
-    asyncio.create_task(check_prices())
+    executor.submit(start_check_prices)
+    # Start the bot polling
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
