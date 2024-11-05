@@ -530,8 +530,7 @@ def start_check_prices():
     loop.close()
 
 async def main():
-    executor.submit(start_check_prices)
-    # Start the bot polling
+    asyncio.create_task(check_prices())
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
