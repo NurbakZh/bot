@@ -4,11 +4,17 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from config_reader import config
-from datetime import datetime, time
 from paarser import get_data_from_last_script, get_price, change_price
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 # Enable logging to capture important messages
 logging.basicConfig(level=logging.INFO)
+
+check_prices_lock = threading.Lock()
+
+# Initialize ThreadPoolExecutor
+executor = ThreadPoolExecutor(max_workers=1)
 
 # Create the bot and dispatcher
 bot = Bot(token='8053355193:AAHIXLq3hKEfcTPsdTPRZJ_C7k2aR_C9Sgg')
