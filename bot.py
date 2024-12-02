@@ -532,8 +532,6 @@ async def check_prices():
                                     else:  
                                         await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! Обновляем цену на {current_price - 1}.")
                                         item["min_price_possible"] = current_price - 1 
-            except TelegramNetworkError as e:
-                    
             except Exception as e:
                 logging.error(f"Error in check_prices: {e}")
         await asyncio.sleep(120)
