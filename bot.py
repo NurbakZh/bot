@@ -4,6 +4,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from config_reader import config
+import sys
+import signal
 from paarser import get_data_from_last_script, get_price, change_price
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -19,6 +21,38 @@ executor = ThreadPoolExecutor(max_workers=1)
 # Create the bot and dispatcher
 bot = Bot(token='8053355193:AAHIXLq3hKEfcTPsdTPRZJ_C7k2aR_C9Sgg')
 dp = Dispatcher()
+
+# Dictionaries to hold user data and state
+user_items = {}
+user_states = {}
+user_login_status = {}
+pagination_data = {}
+user_sleep_durations = {}
+
+DB_FILE = 'db.txt'
+
+def load_data():
+    global user_login_status, user_items, user_states
+    try:
+        with open(DB_FILE, 'r') as f:
+            data = json.load(f)
+            user_login_status = data.get("user_login_status", {})
+            user_items = data.get("user_items", {})
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Initialize empty structures if file is not found or corrupt
+        user_login_status, user_items, user_states = {}, {}, {}
+
+def save_data():
+    for user_id, items in user_items.items():
+        unique_items = {item['first_url']: item for item in items}  # Keep unique by URL
+        user_items[user_id] = list(unique_items.values())  # Update with unique items
+
+    data = {
+        "user_login_status": user_login_status,
+        "user_items": user_items,
+    }
+    with open(DB_FILE, 'w') as f:
+        json.dump(data, f)
 
 # Create inline keyboard buttons
 sleep_duration = 180
@@ -61,14 +95,7 @@ change_item_menu = InlineKeyboardMarkup(inline_keyboard=[
 # Greeting message
 greet = "Привет {name}, я бот, который поможет тебе следить за ценами на [omarket.kz](https://omarket.kz), Только тсс.... 🤫"
 
-greet_again = "Привет еще раз {name}, я всё тот же бот, а ниже команды которые я умею 🧑‍💻:"
-
-# Dictionaries to hold user data and state
-user_items = {}
-user_states = {}
-user_login_status = {}
-pagination_data = {}
-user_sleep_durations = {}
+greet_again = "Привет еще раз {name}, я всё тот же бот, а ниже команды которые я умею 🧑‍💻:
 
 
 def item_exists(user_id, url):
@@ -506,13 +533,36 @@ async def check_prices():
                                     else:  
                                         await bot.send_message(user_id, f"Цена на товар {item['first_url']} снизилась до {current_price}! Обновляем цену на {current_price - 1}.")
                                         item["min_price_possible"] = current_price - 1 
+            except TelegramNetworkError as e:
+                    
             except Exception as e:
                 logging.error(f"Error in check_prices: {e}")
         await asyncio.sleep(120)
 
+def signal_handler(signum, frame):
+    logging.info(f"Received signal {signum}")
+    save_data()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
+async def on_shutdown():
+    save_data()
+    await bot.close()
+    
 async def main():
     asyncio.create_task(check_prices())
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, on_shutdown=on_shutdown)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logging.info("Received keyboard interrupt")
+        save_data()
+    except Exception as e:
+        logging.error(f"Fatal error: {e}")
+        save_data()
+    finally:
+        save_data()
